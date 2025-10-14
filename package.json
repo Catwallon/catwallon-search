@@ -1,0 +1,19 @@
+{
+  "name": "search-engine-v2",
+  "version": "0.1.0-dev",
+  "description": "Second attempt to make a search engine, this time in typescript",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsx --watch src/index.ts",
+    "build": "tsc src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "author": "Catwallon",
+  "license": "ISC",
+  "packageManager": "pnpm@10.12.3",
+  "dependencies": {
+    "tsc": "^2.0.4",
+    "tsx": "^4.20.6",
+    "typescript": "latest"
+  }
+}
