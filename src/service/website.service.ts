@@ -5,8 +5,37 @@ import {
   WebsiteModel,
 } from "../models/website.model";
 import { ROBOT_NAME } from "../utils/consts";
+import { parseStringPromise } from "xml2js";
+import { pageUrls } from "../utils/vars";
 
 export class WebsiteService {
+  private async recursiveSitemap(sitemapUrls: string[]): Promise<void> {
+    for (const sitemapUrl of sitemapUrls) {
+      try {
+        const sitemapXmlRes: AxiosResponse<string> = await axios.get(
+          sitemapUrl
+        );
+        const sitemapXml: string = sitemapXmlRes.data;
+        const sitemapXmlParsed = await parseStringPromise(sitemapXml);
+
+        if (sitemapXmlParsed.sitemapindex) {
+          const newSitemapUrls: string[] =
+            sitemapXmlParsed.sitemapindex.sitemap.map((s: any) => s.loc[0]);
+
+          await this.recursiveSitemap(newSitemapUrls);
+        } else if (sitemapXmlParsed.urlset) {
+          const newPageUrls: string[] = sitemapXmlParsed.urlset.url.map(
+            (u: any) => u.loc[0]
+          );
+
+          pageUrls.push(...newPageUrls);
+        }
+      } catch (error) {
+        console.error("Error fetching sitemap:", sitemapUrl);
+      }
+    }
+  }
+
   async crawl(domain: string): Promise<void> {
     const robotsTxtRes: AxiosResponse<string> = await axios.get(
       `https://${domain}/robots.txt`
@@ -47,6 +76,6 @@ export class WebsiteService {
       crawlDelay,
     });
 
-    console.log(toWebsite(websiteDoc).sitemapUrls);
+    await this.recursiveSitemap(websiteDoc.sitemapUrls);
   }
 }
