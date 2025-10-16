@@ -1,23 +1,51 @@
-import mongoose, { Schema, Document } from "mongoose";
+import {
+  Schema,
+  InferSchemaType,
+  Model,
+  model,
+  HydratedDocument,
+} from "mongoose";
 
-export interface Website {
+const WebsiteSchema = new Schema(
+  {
+    domain: { type: String, required: true },
+    allowedPaths: { type: [String], default: [] },
+    disallowedPaths: { type: [String], default: [] },
+    sitemapUrls: { type: [String], default: [] },
+    crawlDelay: { type: Number, default: null },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+export type WebsiteDocument = HydratedDocument<
+  InferSchemaType<typeof WebsiteSchema>
+>;
+
+export class Website {
+  id: string;
   domain: string;
   allowedPaths: string[];
   disallowedPaths: string[];
   sitemapUrls: string[];
-  crawlDelay: number | null;
-  lastCrawledAt: Date;
+  updatedAt: Date;
+  createdAt: Date;
 }
 
-const WebsiteSchema: Schema = new Schema({
-  domain: { type: String, required: true },
-  allowedPaths: { type: [String], default: [] },
-  disallowedPaths: { type: [String], default: [] },
-  sitemapUrls: { type: [String], default: [] },
-  crawlDelay: { type: Number, default: null },
-  lastCrawledAt: { type: Date, default: null },
-});
+export function toWebsite(doc: WebsiteDocument): Website {
+  return {
+    id: doc._id.toString(),
+    domain: doc.domain,
+    allowedPaths: doc.allowedPaths,
+    disallowedPaths: doc.disallowedPaths,
+    sitemapUrls: doc.sitemapUrls,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
+  };
+}
 
-export const WebsiteModel: mongoose.Model<Website & Document> = mongoose.model<
-  Website & Document
->("Website", WebsiteSchema);
+export const WebsiteModel: Model<WebsiteDocument> = model<WebsiteDocument>(
+  "Website",
+  WebsiteSchema
+);
