@@ -12,4 +12,4 @@ try {
   console.error("Connection error:", error);
 }
 
-crawlerService.crawlWebsite("https://en.wikipedia.org");
+crawlerService.crawl("https://en.wikipedia.org");
