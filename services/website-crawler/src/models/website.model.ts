@@ -8,10 +8,9 @@ import {
 
 const WebsiteSchema = new Schema(
   {
-    domain: { type: String, required: true },
+    domain: { type: String, required: true, unique: true },
     allowedPaths: { type: [String], default: [] },
     disallowedPaths: { type: [String], default: [] },
-    sitemapUrls: { type: [String], default: [] },
     crawlDelay: { type: Number, default: null },
   },
   {
@@ -28,7 +27,6 @@ export class Website {
   domain: string;
   allowedPaths: string[];
   disallowedPaths: string[];
-  sitemapUrls: string[];
   updatedAt: Date;
   createdAt: Date;
 }
@@ -39,7 +37,6 @@ export function toWebsite(doc: WebsiteDocument): Website {
     domain: doc.domain,
     allowedPaths: doc.allowedPaths,
     disallowedPaths: doc.disallowedPaths,
-    sitemapUrls: doc.sitemapUrls,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };

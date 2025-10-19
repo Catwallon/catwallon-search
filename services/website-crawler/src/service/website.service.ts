@@ -1,15 +1,15 @@
 import axios, { AxiosResponse } from "axios";
-import {
-  toWebsite,
-  WebsiteDocument,
-  WebsiteModel,
-} from "../models/website.model";
+import { WebsiteModel } from "../models/website.model";
 import { ROBOT_NAME } from "../utils/consts";
 import { parseStringPromise } from "xml2js";
-import { pageUrls } from "../utils/vars";
+import Redis from "ioredis";
 
 export class WebsiteService {
-  private async recursiveSitemap(sitemapUrls: string[]): Promise<void> {
+  private redis = new Redis({ host: "redis", port: 6379 });
+
+  private async recursiveSitemap(sitemapUrls: string[]): Promise<string[]> {
+    const pageUrls: string[] = [];
+
     for (const sitemapUrl of sitemapUrls) {
       try {
         const sitemapXmlRes: AxiosResponse<string> = await axios.get(
@@ -22,7 +22,11 @@ export class WebsiteService {
           const newSitemapUrls: string[] =
             sitemapXmlParsed.sitemapindex.sitemap.map((s: any) => s.loc[0]);
 
-          await this.recursiveSitemap(newSitemapUrls);
+          const newPageUrls: string[] = await this.recursiveSitemap(
+            newSitemapUrls
+          );
+
+          pageUrls.push(...newPageUrls);
         } else if (sitemapXmlParsed.urlset) {
           const newPageUrls: string[] = sitemapXmlParsed.urlset.url.map(
             (u: any) => u.loc[0]
@@ -31,9 +35,13 @@ export class WebsiteService {
           pageUrls.push(...newPageUrls);
         }
       } catch (error) {
-        console.error("Error fetching sitemap:", sitemapUrl);
+        console.warn(
+          `Cant fetch sitemap (${error.response?.status || 500}): ${sitemapUrl}`
+        );
       }
     }
+
+    return pageUrls;
   }
 
   async crawl(domain: string): Promise<void> {
@@ -68,14 +76,21 @@ export class WebsiteService {
       }
     }
 
-    const websiteDoc: WebsiteDocument = await WebsiteModel.create({
-      domain,
-      allowedPaths,
-      disallowedPaths,
-      sitemapUrls,
-      crawlDelay,
-    });
+    try {
+      await WebsiteModel.create({
+        domain,
+        allowedPaths,
+        disallowedPaths,
+        crawlDelay,
+      });
+    } catch (error) {
+      console.warn(`Website ${domain} already exists in the database.`);
 
-    await this.recursiveSitemap(websiteDoc.sitemapUrls);
+      return;
+    }
+
+    const pageUrls: string[] = await this.recursiveSitemap(sitemapUrls);
+
+    await this.redis.lpush("pageUrls", ...pageUrls);
   }
 }
