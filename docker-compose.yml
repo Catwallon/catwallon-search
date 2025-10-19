@@ -1,0 +1,10 @@
+services:
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+  website-crawler:
+    build:
+      context: ./services/website-crawler
+    depends_on:
+      - mongodb
