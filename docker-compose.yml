@@ -3,8 +3,11 @@ services:
     image: mongo:latest
     networks:
       - crawler-network
-    ports:
-      - "27017:27017"
+
+  redis:
+    image: redis:alpine3.22
+    networks:
+      - crawler-network
 
   website-crawler:
     build:
@@ -13,6 +16,7 @@ services:
       - crawler-network
     depends_on:
       - mongo
+      - redis
 
   mongo-express:
     image: mongo-express:latest
