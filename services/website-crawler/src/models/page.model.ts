@@ -8,7 +8,7 @@ import {
 
 const PageSchema = new Schema(
   {
-    url: { type: String, required: true },
+    url: { type: String, required: true, unique: true },
     title: { type: String, default: "" },
   },
   {

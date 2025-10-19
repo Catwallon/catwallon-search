@@ -5,7 +5,7 @@ import { parseStringPromise } from "xml2js";
 import Redis from "ioredis";
 
 export class WebsiteService {
-  private redis = new Redis({ host: "redis", port: 6379 });
+  private redis: Redis = new Redis({ host: "redis", port: 6379 });
 
   private async recursiveSitemap(sitemapUrls: string[]): Promise<string[]> {
     const pageUrls: string[] = [];
@@ -36,7 +36,9 @@ export class WebsiteService {
         }
       } catch (error) {
         console.warn(
-          `Cant fetch sitemap (${error.response?.status || 500}): ${sitemapUrl}`
+          `Can't fetch sitemap (${
+            error.response?.status || 500
+          }): ${sitemapUrl}`
         );
       }
     }
@@ -45,6 +47,8 @@ export class WebsiteService {
   }
 
   async crawl(domain: string): Promise<void> {
+    console.log(`Crawling website ${domain}`);
+
     const robotsTxtRes: AxiosResponse<string> = await axios.get(
       `https://${domain}/robots.txt`
     );
@@ -91,6 +95,8 @@ export class WebsiteService {
 
     const pageUrls: string[] = await this.recursiveSitemap(sitemapUrls);
 
-    await this.redis.lpush("pageUrls", ...pageUrls);
+    if (pageUrls.length > 0) {
+      await this.redis.lpush("pageUrls", ...pageUrls);
+    }
   }
 }
