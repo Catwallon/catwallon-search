@@ -49,11 +49,19 @@ export class WebsiteService {
   async crawl(domain: string): Promise<void> {
     console.log(`Crawling website ${domain}`);
 
-    const robotsTxtRes: AxiosResponse<string> = await axios.get(
-      `https://${domain}/robots.txt`
-    );
-    const robotsTxt: string = robotsTxtRes.data;
-    const robotsTxtLines: string[] = robotsTxt.split("\n");
+    let robotsTxtLines: string[] = [];
+    try {
+      const robotsTxtRes: AxiosResponse<string> = await axios.get(
+        `https://${domain}/robots.txt`
+      );
+      const robotsTxt: string = robotsTxtRes.data;
+
+      robotsTxtLines = robotsTxt.split("\n");
+    } catch (error) {
+      console.warn(
+        `Can't fetch robots.txt (${error.response?.status || 500}): ${domain}`
+      );
+    }
 
     let allowedPaths: string[] = [];
     let disallowedPaths: string[] = [];
@@ -93,10 +101,10 @@ export class WebsiteService {
       return;
     }
 
-    const pageUrls: string[] = await this.recursiveSitemap(sitemapUrls);
+    const foundPageUrls: string[] = await this.recursiveSitemap(sitemapUrls);
 
-    if (pageUrls.length > 0) {
-      await this.redis.lpush("pageUrls", ...pageUrls);
+    if (foundPageUrls.length > 0) {
+      await this.redis.lpush("pageUrls", ...foundPageUrls);
     }
   }
 }
