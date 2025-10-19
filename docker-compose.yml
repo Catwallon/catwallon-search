@@ -1,10 +1,30 @@
 services:
-  mongodb:
+  mongo:
     image: mongo:latest
+    networks:
+      - crawler-network
     ports:
       - "27017:27017"
+
   website-crawler:
     build:
       context: ./services/website-crawler
+    networks:
+      - crawler-network
     depends_on:
-      - mongodb
+      - mongo
+
+  mongo-express:
+    image: mongo-express:latest
+    networks:
+      - crawler-network
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongo
+    environment:
+      - ME_CONFIG_BASICAUTH=false
+
+networks:
+  crawler-network:
+    driver: bridge

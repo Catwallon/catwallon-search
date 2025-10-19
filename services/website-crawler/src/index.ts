@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 const crawlerService: CrawlerService = new CrawlerService();
 
 try {
-  await mongoose.connect("mongodb://mongodb:27017");
+  await mongoose.connect("mongodb://mongo:27017");
   console.log("Connected to MongoDB");
 } catch (error) {
   console.error("Connection error:", error);
